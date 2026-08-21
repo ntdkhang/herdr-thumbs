@@ -58,7 +58,11 @@ load_config() {
   : "${THUMBS_ALIGN:=auto}"
   : "${THUMBS_CLIPBOARD:=auto}"
   : "${THUMBS_NOTIFY:=1}"
-  : "${THUMBS_PASTE_ON_UPCASE:=1}"
+
+  # What an uppercase hint does, overriding the action it was invoked from:
+  # paste (copy and type it into the pane), open (run the open dispatch),
+  # copy, or swap (copy actions open, open actions copy).
+  : "${THUMBS_UPCASE:=paste}"
   : "${THUMBS_SOURCE:=visible}"
 
   # Extra match patterns: the shipped defaults plus the user's own.

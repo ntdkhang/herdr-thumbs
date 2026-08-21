@@ -175,13 +175,38 @@ open_match() {
   esac
 }
 
-case $mode in
-  open)
-    if ((upcase)); then
-      # Uppercase hint in open mode means "just copy it after all".
-      copy_to_clipboard "$joined" && notify "Copied" "$(short "$joined")"
-      exit 0
+# An uppercase hint overrides the action it was invoked from.
+act=$mode
+if ((upcase)); then
+  case $THUMBS_UPCASE in
+    open) act="open" ;;
+    copy) act="copy" ;;
+    swap) [[ $mode == open ]] && act="copy" || act="open" ;;
+    *) act="paste" ;;
+  esac
+fi
+
+copy_and_notify() {
+  if copy_to_clipboard "$joined"; then
+    notify "Copied" "$(short "$joined")"
+  else
+    bail "could not copy the selection — see $STATE_DIR/thumbs.log"
+  fi
+}
+
+case $act in
+  paste)
+    copied=0
+    copy_to_clipboard "$joined" && copied=1
+    if [[ -n $target ]] && "$HERDR" pane send-text "$target" "$joined" >/dev/null 2>&1; then
+      notify "Pasted" "$(short "$joined")"
+    elif ((copied)); then
+      notify "Copied" "$(short "$joined")"
+    else
+      bail "could not paste or copy the selection — see $STATE_DIR/thumbs.log"
     fi
+    ;;
+  open)
     cwd=$(pane_cwd)
     opened=0
     for match in "${matches[@]}"; do
@@ -192,7 +217,7 @@ case $mode in
       fi
     done
     if ((opened == 0)); then
-      copy_to_clipboard "$joined" && notify "Copied" "$(short "$joined")"
+      copy_and_notify
     elif ((opened == 1)); then
       notify "Opened" "$(short "$joined")"
     else
@@ -200,18 +225,6 @@ case $mode in
     fi
     ;;
   *)
-    copied=0
-    copy_to_clipboard "$joined" && copied=1
-    pasted=0
-    if ((upcase)) && on "$THUMBS_PASTE_ON_UPCASE" && [[ -n $target ]]; then
-      "$HERDR" pane send-text "$target" "$joined" >/dev/null 2>&1 && pasted=1
-    fi
-    if ((pasted)); then
-      notify "Pasted" "$(short "$joined")"
-    elif ((copied)); then
-      notify "Copied" "$(short "$joined")"
-    else
-      bail "could not copy the selection — see $STATE_DIR/thumbs.log"
-    fi
+    copy_and_notify
     ;;
 esac

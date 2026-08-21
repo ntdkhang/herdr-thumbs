@@ -63,7 +63,7 @@ herdr plugin link .
 | Key | What it does |
 | --- | --- |
 | a hint letter | copies that match and closes |
-| an uppercase hint letter | copies it *and* types it into the pane it came from |
+| an uppercase hint letter | whatever `THUMBS_UPCASE` says — by default copies it *and* types it into the pane it came from |
 | `space` | starts multi-selection; hints then toggle, `space` again finalises |
 | `↑` `↓` `←` `→` | moves the cursor between matches, `enter` picks the current one |
 | `backspace` | clears a partly typed hint |
@@ -81,8 +81,9 @@ want for a command line.
 | git SHA | runs `git show <sha>` in a split |
 | anything else | falls back to copying |
 
-An uppercase hint in open mode copies instead of opening, and every one of these
-is configurable. `file.rs:42` line numbers come from a pattern this plugin adds
+Set `THUMBS_UPCASE=open` to get tmux-thumbs' `@thumbs-upcase-command` habit, where
+an uppercase hint opens the match instead of pasting it. Every action above is
+configurable. `file.rs:42` line numbers come from a pattern this plugin adds
 on top of the upstream set.
 
 ## Configuration

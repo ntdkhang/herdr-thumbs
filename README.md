@@ -28,6 +28,12 @@ Installing builds `thumbs` from source, so you need a Rust toolchain
 recommended — without it the hints still work, they just are not aligned to the
 pane's position in the tab.
 
+Linux and macOS only, and the manifest says so, so Herdr will refuse to install
+it on Windows rather than half-work. The blocker is upstream: `thumbs` renders
+through [termion](https://crates.io/crates/termion), which has no Windows
+support, and it reads keys from `/dev/tty`. Windows would mean a different
+picker, not a rewrite of the scripts around it.
+
 To work on it locally, clone the repo and link it instead — `herdr plugin link`
 does not run build commands, so build the picker yourself first:
 

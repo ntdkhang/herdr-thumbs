@@ -1,0 +1,75 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    name: Lint and validate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check shell syntax
+        run: for script in scripts/*.sh; do bash -n "$script"; done
+
+      - name: shellcheck
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends shellcheck
+          shellcheck --severity=style scripts/*.sh
+
+      - name: Validate the manifest and config example
+        run: python3 tests/check_manifest.py
+
+      - name: ruff
+        run: |
+          pipx install ruff
+          ruff check scripts tests
+          ruff format --diff scripts tests
+
+  test:
+    name: Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run the layout tests
+        run: python3 -m unittest discover -s tests -v
+
+  build:
+    name: Build thumbs (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cache cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: ${{ matrix.os }}-cargo-${{ hashFiles('scripts/build.sh') }}
+
+      # The install path users take: this is what `herdr plugin install` runs.
+      - name: scripts/build.sh
+        run: sh scripts/build.sh
+
+      - name: The built picker runs
+        run: |
+          ./vendor/bin/thumbs --help
+          ./vendor/bin/thumbs --version
+
+      # The picker needs a tty, so drive it through one: type the hint for the
+      # only match on screen and check it lands in the target file.
+      - name: Pick a hint through a pty
+        run: python3 tests/pick_through_pty.py

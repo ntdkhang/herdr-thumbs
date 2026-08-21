@@ -1,5 +1,7 @@
 # herdr-thumbs
 
+[![CI](https://github.com/sd2k/herdr-thumbs/actions/workflows/ci.yml/badge.svg)](https://github.com/sd2k/herdr-thumbs/actions/workflows/ci.yml)
+
 [tmux-thumbs](https://github.com/fcsonline/tmux-thumbs) for
 [Herdr](https://herdr.dev): press a key, every URL, path, SHA, UUID and IP in
 the pane gets a one-letter hint, press that letter, and it is on your clipboard.
@@ -26,22 +28,36 @@ Installing builds `thumbs` from source, so you need a Rust toolchain
 recommended — without it the hints still work, they just are not aligned to the
 pane's position in the tab.
 
-Then bind the actions in `~/.config/herdr/config.toml` (plugin manifests cannot
-register keys themselves):
+To work on it locally, clone the repo and link it instead — `herdr plugin link`
+does not run build commands, so build the picker yourself first:
+
+```sh
+sh scripts/build.sh
+herdr plugin link .
+```
+
+## Bindings
+
+Herdr ignores keybindings declared in a plugin manifest, so the three actions
+need binding yourself. Paste this into `~/.config/herdr/config.toml` and run
+`herdr server reload-config`:
 
 ```toml
+# Copy a match. prefix+space is tmux-thumbs' default key.
 [[keys.command]]
 key = "prefix+space"
 type = "plugin_action"
 command = "sd2k.thumbs.pick"
-description = "pick text (copy)"
+description = "pick text"
 
+# Copy several matches. Space during a normal pick does this too.
 [[keys.command]]
 key = "prefix+alt+space"
 type = "plugin_action"
 command = "sd2k.thumbs.pick-multi"
 description = "pick several"
 
+# Open a match instead of copying it: editor, browser or git show.
 [[keys.command]]
 key = "prefix+o"
 type = "plugin_action"
@@ -49,14 +65,16 @@ command = "sd2k.thumbs.pick-open"
 description = "pick text (open)"
 ```
 
-Reload with `herdr server reload-config`.
+Every action also works from the command line, which is handy for checking your
+install: `herdr plugin action invoke sd2k.thumbs.pick`.
 
-For local development, clone the repo and link it instead:
+Actions in full:
 
-```sh
-sh scripts/build.sh          # plugin link does not run build commands
-herdr plugin link .
-```
+| Action | Does |
+| --- | --- |
+| `sd2k.thumbs.pick` | pick one match and copy it |
+| `sd2k.thumbs.pick-multi` | pick several, copied space-separated |
+| `sd2k.thumbs.pick-open` | pick one match and act on it |
 
 ## Using it
 
@@ -85,6 +103,44 @@ Set `THUMBS_UPCASE=open` to get tmux-thumbs' `@thumbs-upcase-command` habit, whe
 an uppercase hint opens the match instead of pasting it. Every action above is
 configurable. `file.rs:42` line numbers come from a pattern this plugin adds
 on top of the upstream set.
+
+## Coming from tmux-thumbs
+
+Options move from `tmux.conf` to `config.env` in the plugin config directory
+(`herdr plugin config-dir sd2k.thumbs`):
+
+| tmux-thumbs | herdr-thumbs |
+| --- | --- |
+| `@thumbs-key space` | a `[[keys.command]]` entry, see above |
+| `@thumbs-alphabet qwerty` | `THUMBS_ALPHABET=qwerty` |
+| `@thumbs-position left` | `THUMBS_POSITION=left` |
+| `@thumbs-reverse enabled` | `THUMBS_REVERSE=1` |
+| `@thumbs-unique enabled` | `THUMBS_UNIQUE=1` |
+| `@thumbs-contrast 1` | `THUMBS_CONTRAST=1` |
+| `@thumbs-multi enabled` | `THUMBS_MULTI=1` |
+| `@thumbs-bg-color` / `-fg-color` | `THUMBS_BG_COLOR` / `THUMBS_FG_COLOR` |
+| `@thumbs-hint-bg-color` / `-hint-fg-color` | `THUMBS_HINT_BG_COLOR` / `THUMBS_HINT_FG_COLOR` |
+| `@thumbs-select-bg-color` / `-select-fg-color` | `THUMBS_SELECT_BG_COLOR` / `THUMBS_SELECT_FG_COLOR` |
+| `@thumbs-multi-bg-color` / `-multi-fg-color` | `THUMBS_MULTI_BG_COLOR` / `THUMBS_MULTI_FG_COLOR` |
+| `@thumbs-regexp-1`, `-2`, … | one regex per line in `patterns.txt` |
+| `@thumbs-command '… xclip …'` | `THUMBS_CLIPBOARD` (default `auto` already copies) |
+| `@thumbs-upcase-command '… xdg-open …'` | `THUMBS_UPCASE=open` |
+
+So a typical tmux-thumbs setup ports to:
+
+```sh
+# ~/.config/herdr/plugins/config/sd2k.thumbs/config.env
+THUMBS_UPCASE=open        # @thumbs-upcase-command 'xdg-open {}'
+THUMBS_REVERSE=1          # @thumbs-reverse enabled
+THUMBS_CONTRAST=1         # @thumbs-contrast 2
+THUMBS_FG_COLOR=black     # @thumbs-fg-color black
+THUMBS_BG_COLOR=yellow    # @thumbs-bg-color yellow
+THUMBS_HINT_FG_COLOR=yellow
+THUMBS_HINT_BG_COLOR=black
+```
+
+`@thumbs-command` has no direct equivalent because copying is built in: pick a
+clipboard with `THUMBS_CLIPBOARD`, or use the open action for anything else.
 
 ## Configuration
 
@@ -119,6 +175,20 @@ Two things worth knowing about the Herdr side of this:
   you pressed the key. That is exactly what you want here, but it does mean the
   actions are only useful from a keybinding or the command palette, not from a
   script pointed at some other pane.
+
+## Development
+
+```sh
+sh scripts/build.sh                        # build the vendored picker
+python3 -m unittest discover -s tests      # hint layout and clipping
+python3 tests/check_manifest.py            # manifest and config example agree
+python3 tests/pick_through_pty.py          # drive a real pick through a pty
+shellcheck --severity=style scripts/*.sh
+ruff check scripts tests && ruff format --diff scripts tests
+```
+
+CI runs all of that on Linux and macOS, including building `thumbs` from the
+pinned tag, so a broken install path fails before anyone hits it.
 
 ## Credits
 

@@ -1,0 +1,7 @@
+# Config for the helper scripts and tests only; the plugin itself is shell.
+[tool.ruff]
+line-length = 100
+target-version = "py39"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]

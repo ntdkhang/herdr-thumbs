@@ -1,0 +1,12 @@
+# Extra match patterns shipped with the plugin, on top of the ones thumbs
+# already knows (urls, paths, git SHAs, UUIDs, IPs, hex colours, docker
+# digests, numbers, diff files, markdown links).
+#
+# Rust regex syntax. A (?P<match>...) group or the first capture group becomes
+# the copied text; without either, the whole match is used. Custom patterns win
+# over the built-in ones when they start at the same column.
+#
+# Set THUMBS_DEFAULT_PATTERNS=0 in config.env to ignore this file.
+
+# path:line and path:line:col, so "src/main.rs:42" opens at the right line
+(?P<match>[.\w\-@$~\[\]]*(?:/[.\w\-@$\[\]]+)+:[0-9]+(?::[0-9]+)?)

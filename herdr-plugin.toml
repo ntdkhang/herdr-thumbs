@@ -1,0 +1,33 @@
+id = "sd2k.thumbs"
+name = "Thumbs"
+version = "0.1.0"
+min_herdr_version = "0.8.0"
+description = "Hint-pick anything on screen: copy it, paste it into the pane, or open it"
+platforms = ["linux", "macos"]
+
+[[build]]
+command = ["sh", "scripts/build.sh"]
+
+[[actions]]
+id = "pick"
+title = "Pick text (copy)"
+contexts = ["pane"]
+command = ["bash", "scripts/pick.sh", "copy"]
+
+[[actions]]
+id = "pick-multi"
+title = "Pick text (copy several)"
+contexts = ["pane"]
+command = ["bash", "scripts/pick.sh", "copy", "multi"]
+
+[[actions]]
+id = "pick-open"
+title = "Pick text (open)"
+contexts = ["pane"]
+command = ["bash", "scripts/pick.sh", "open"]
+
+[[panes]]
+id = "hints"
+title = "Thumbs"
+placement = "overlay"
+command = ["bash", "scripts/overlay.sh"]

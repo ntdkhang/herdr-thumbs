@@ -1,6 +1,8 @@
 # herdr-thumbs
 
-[![CI](https://github.com/sd2k/herdr-thumbs/actions/workflows/ci.yml/badge.svg)](https://github.com/sd2k/herdr-thumbs/actions/workflows/ci.yml)
+Maintained fork of [sd2k/herdr-thumbs](https://github.com/sd2k/herdr-thumbs). The upstream MIT license remains in [LICENSE](LICENSE).
+
+[![CI](https://github.com/ntdkhang/herdr-thumbs/actions/workflows/ci.yml/badge.svg)](https://github.com/ntdkhang/herdr-thumbs/actions/workflows/ci.yml)
 
 [tmux-thumbs](https://github.com/fcsonline/tmux-thumbs) for
 [Herdr](https://herdr.dev): press a key, every URL, path, SHA, UUID and IP in
@@ -20,7 +22,7 @@ deciding what happens to what you picked.
 ## Install
 
 ```sh
-herdr plugin install sd2k/herdr-thumbs
+herdr plugin install ntdkhang/herdr-thumbs
 ```
 
 Installing builds `thumbs` from source, so you need a Rust toolchain
@@ -53,34 +55,34 @@ need binding yourself. Paste this into `~/.config/herdr/config.toml` and run
 [[keys.command]]
 key = "prefix+space"
 type = "plugin_action"
-command = "sd2k.thumbs.pick"
+command = "ntdkhang.thumbs.pick"
 description = "pick text"
 
 # Copy several matches. Space during a normal pick does this too.
 [[keys.command]]
 key = "prefix+alt+space"
 type = "plugin_action"
-command = "sd2k.thumbs.pick-multi"
+command = "ntdkhang.thumbs.pick-multi"
 description = "pick several"
 
 # Open a match instead of copying it: editor, browser or git show.
 [[keys.command]]
 key = "prefix+o"
 type = "plugin_action"
-command = "sd2k.thumbs.pick-open"
+command = "ntdkhang.thumbs.pick-open"
 description = "pick text (open)"
 ```
 
 Every action also works from the command line, which is handy for checking your
-install: `herdr plugin action invoke sd2k.thumbs.pick`.
+install: `herdr plugin action invoke ntdkhang.thumbs.pick`.
 
 Actions in full:
 
 | Action | Does |
 | --- | --- |
-| `sd2k.thumbs.pick` | pick one match and copy it |
-| `sd2k.thumbs.pick-multi` | pick several, copied space-separated |
-| `sd2k.thumbs.pick-open` | pick one match and act on it |
+| `ntdkhang.thumbs.pick` | pick one match and copy it |
+| `ntdkhang.thumbs.pick-multi` | pick several, copied space-separated |
+| `ntdkhang.thumbs.pick-open` | pick one match and act on it |
 
 ## Using it
 
@@ -96,7 +98,7 @@ Actions in full:
 Multi-selected matches are copied space-separated, which is usually what you
 want for a command line.
 
-`sd2k.thumbs.pick-open` acts on the match instead of copying it:
+`ntdkhang.thumbs.pick-open` acts on the match instead of copying it:
 
 | Match | What happens |
 | --- | --- |
@@ -113,7 +115,7 @@ on top of the upstream set.
 ## Coming from tmux-thumbs
 
 Options move from `tmux.conf` to `config.env` in the plugin config directory
-(`herdr plugin config-dir sd2k.thumbs`):
+(`herdr plugin config-dir ntdkhang.thumbs`):
 
 | tmux-thumbs | herdr-thumbs |
 | --- | --- |
@@ -135,7 +137,7 @@ Options move from `tmux.conf` to `config.env` in the plugin config directory
 So a typical tmux-thumbs setup ports to:
 
 ```sh
-# ~/.config/herdr/plugins/config/sd2k.thumbs/config.env
+# ~/.config/herdr/plugins/config/ntdkhang.thumbs/config.env
 THUMBS_UPCASE=open        # @thumbs-upcase-command 'xdg-open {}'
 THUMBS_REVERSE=1          # @thumbs-reverse enabled
 THUMBS_CONTRAST=1         # @thumbs-contrast 2
@@ -151,7 +153,7 @@ clipboard with `THUMBS_CLIPBOARD`, or use the open action for anything else.
 ## Configuration
 
 Both files are optional and live in the plugin config directory
-(`herdr plugin config-dir sd2k.thumbs`):
+(`herdr plugin config-dir ntdkhang.thumbs`):
 
 - `config.env` — appearance and behaviour. Start from
   [`config/config.env.example`](config/config.env.example), which lists every

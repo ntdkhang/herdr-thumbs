@@ -49,7 +49,7 @@ pane_env=(
 [[ $variant == multi ]] && pane_env+=(--env "THUMBS_MULTI=1")
 
 "$HERDR" plugin pane open \
-  --plugin "${HERDR_PLUGIN_ID:-sd2k.thumbs}" \
+  --plugin "${HERDR_PLUGIN_ID:-ntdkhang.thumbs}" \
   --entrypoint hints \
   --focus \
   "${pane_env[@]}" >/dev/null || die "could not open the hint overlay"

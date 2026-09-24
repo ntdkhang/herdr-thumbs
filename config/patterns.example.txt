@@ -2,7 +2,7 @@
 # and the shipped defaults. Copy to the plugin config directory as
 # patterns.txt:
 #
-#   cp config/patterns.example.txt "$(herdr plugin config-dir sd2k.thumbs)/patterns.txt"
+#   cp config/patterns.example.txt "$(herdr plugin config-dir ntdkhang.thumbs)/patterns.txt"
 #
 # A (?P<match>...) group or the first capture group becomes the copied text;
 # without either, the whole match is used. Custom patterns take priority over

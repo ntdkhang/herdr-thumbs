@@ -68,6 +68,34 @@ class OffsetTests(unittest.TestCase):
         self.assertEqual(prepare.offsets({}, "w1:p1", 141, 47), (0, 0))
 
 
+class WrappedUrlTests(unittest.TestCase):
+    def test_restores_complete_url_across_multiple_screen_rows(self):
+        visible = ["see https://example.org/docs/long-", "path?key=value&more=", "yes and more"]
+        width = len(visible[0])
+        url = "https://example.org/docs/long-path?key=value&more=yes"
+        self.assertEqual(
+            prepare.wrapped_urls(visible, f"see {url} and more", width),
+            {"https://example.org/docs/long-": url},
+        )
+
+    def test_requires_a_real_soft_wrap_and_matching_logical_line(self):
+        first = "https://example.org/one"
+        self.assertEqual(prepare.wrapped_urls([first, "next"], first + "\nnext", len(first)), {})
+        self.assertEqual(prepare.wrapped_urls([first, "two"], "", len(first)), {})
+        self.assertEqual(prepare.wrapped_urls([first, " two"], first + "two", len(first)), {})
+
+    def test_ambiguous_visible_prefix_is_not_replaced(self):
+        prefix = "https://example.org/a"
+        self.assertEqual(
+            prepare.wrapped_urls(
+                [prefix, "b", prefix, "b"],
+                "https://example.org/ab\nhttps://example.org/abc",
+                len(prefix),
+            ),
+            {},
+        )
+
+
 class EndToEndTests(unittest.TestCase):
     def run_prepare(self, capture, layout_json, cols, rows, align="auto", pane="w1:p2"):
         with tempfile.NamedTemporaryFile("w", suffix=".txt", delete=False) as handle:
@@ -125,6 +153,61 @@ class EndToEndTests(unittest.TestCase):
     def test_garbage_layout_is_tolerated(self):
         out = self.run_prepare("hello\n", "not json at all", cols=10, rows=3)
         self.assertEqual(out.splitlines(), ["hello", ""])
+
+    def test_prepared_capture_keeps_hint_position_but_returns_complete_url(self):
+        prefix = "https://example.org/long-"
+        url = prefix + "continuation"
+        body = json.dumps(
+            {
+                "result": {
+                    "layout": layout(
+                        [
+                            {
+                                "pane_id": "w1:p2",
+                                "rect": {"x": 26, "y": 1, "width": len(prefix), "height": 4},
+                            }
+                        ]
+                    )
+                }
+            }
+        )
+        with tempfile.TemporaryDirectory() as directory:
+            capture = pathlib.Path(directory, "capture.txt")
+            capture.write_text(f"{prefix}\ncontinuation\n")
+            unwrapped = pathlib.Path(directory, "unwrapped.txt")
+            unwrapped.write_text(url + "\n")
+            url_map = pathlib.Path(directory, "url-map.json")
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(PREPARE),
+                    "--capture",
+                    str(capture),
+                    "--unwrapped",
+                    str(unwrapped),
+                    "--url-map",
+                    str(url_map),
+                    "--pane",
+                    "w1:p2",
+                    "--cols",
+                    str(len(prefix)),
+                    "--rows",
+                    "4",
+                ],
+                input=body,
+                text=True,
+                capture_output=True,
+                check=True,
+            )
+            self.assertEqual(result.stdout.splitlines()[:2], [prefix, "continuation"])
+            restored = subprocess.run(
+                [sys.executable, str(ROOT / "scripts/restore_urls.py"), str(url_map)],
+                input=prefix + "\n",
+                text=True,
+                capture_output=True,
+                check=True,
+            )
+            self.assertEqual(restored.stdout, url + "\n")
 
 
 if __name__ == "__main__":

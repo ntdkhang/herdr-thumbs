@@ -51,9 +51,9 @@ need binding yourself. Paste this into `~/.config/herdr/config.toml` and run
 `herdr server reload-config`:
 
 ```toml
-# Copy a match. prefix+space is tmux-thumbs' default key.
+# Copy a match. Ctrl+U takes precedence over the terminal's usual line-clear key.
 [[keys.command]]
-key = "prefix+space"
+key = "ctrl+u"
 type = "plugin_action"
 command = "ntdkhang.thumbs.pick"
 description = "pick text"
@@ -102,7 +102,7 @@ want for a command line.
 
 | Match | What happens |
 | --- | --- |
-| URL | opens in your browser (`xdg-open` / `open`) |
+| URL | opens in Google Chrome on macOS, or the desktop browser on Linux |
 | file path | opens `$EDITOR` in a split next to the pane, at the matched line |
 | git SHA | runs `git show <sha>` in a split |
 | anything else | falls back to copying |
@@ -114,6 +114,13 @@ THUMBS_OPEN_PATH='$HOME/.local/bin/open-in-nvim {} "$THUMBS_TARGET_PANE"'
 ```
 
 The plugin passes an absolute path with an optional `:line` suffix and the source pane ID. This route skips the terminal hint script's machine lookup and pane-content scan.
+
+The picker also reads Herdr's unwrapped pane text to restore URLs that cross
+screen rows. The hint remains on the visible URL prefix, while copying, pasting,
+or opening uses the complete URL. If several full URLs share an indistinguishable
+visible prefix, the selection is left unchanged rather than guessing. On a
+headless remote host, opening a URL falls back to copying it; browser opening
+requires a browser on that host or a configured `THUMBS_OPEN_URL` command.
 
 Set `THUMBS_UPCASE=open` to get tmux-thumbs' `@thumbs-upcase-command` habit, where
 an uppercase hint opens the match instead of pasting it. Every action above is

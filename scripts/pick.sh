@@ -20,13 +20,15 @@ fi
 [[ -n $target ]] || die "could not work out which pane to read"
 
 # Drop anything a previous run left behind after crashing mid-pick.
-find "$STATE_DIR" -maxdepth 1 -name 'capture.*.txt' -o -maxdepth 1 -name 'layout.*.json' \
-  -o -maxdepth 1 -name 'prepared.*.txt' -o -maxdepth 1 -name 'result.*.txt' 2>/dev/null |
+find "$STATE_DIR" -maxdepth 1 \( -name 'capture.*.txt' -o -name 'unwrapped.*.txt' \
+  -o -name 'layout.*.json' -o -name 'prepared.*.txt' -o -name 'urls.*.json' \
+  -o -name 'result.*.txt' \) 2>/dev/null |
   while IFS= read -r stale; do
     [[ -f $stale ]] && find "$stale" -mmin +60 -delete 2>/dev/null
   done
 
 capture=$STATE_DIR/capture.$$.txt
+unwrapped=$STATE_DIR/unwrapped.$$.txt
 layout=$STATE_DIR/layout.$$.json
 
 read_args=(--source "$THUMBS_SOURCE" --format text)
@@ -36,6 +38,10 @@ read_args=(--source "$THUMBS_SOURCE" --format text)
   die "could not read pane $target"
 [[ -s $capture ]] || die "pane $target has no visible output"
 
+# Only used to recover the complete value of URLs that end at a visible row
+# boundary. Keep the visible capture for rendering and hint positions.
+"$HERDR" pane read "$target" --source recent-unwrapped --format text \
+  >"$unwrapped" 2>>"$STATE_DIR/thumbs.log" || : >"$unwrapped"
 "$HERDR" pane layout --pane "$target" >"$layout" 2>/dev/null || : >"$layout"
 
 log "pick mode=$mode variant=$variant target=$target capture=$capture"
@@ -43,6 +49,7 @@ log "pick mode=$mode variant=$variant target=$target capture=$capture"
 pane_env=(
   --env "THUMBS_TARGET_PANE=$target"
   --env "THUMBS_CAPTURE=$capture"
+  --env "THUMBS_UNWRAPPED=$unwrapped"
   --env "THUMBS_LAYOUT=$layout"
   --env "THUMBS_MODE=$mode"
 )

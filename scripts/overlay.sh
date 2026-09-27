@@ -9,11 +9,14 @@ load_config
 target=${THUMBS_TARGET_PANE:-}
 capture=${THUMBS_CAPTURE:-}
 layout=${THUMBS_LAYOUT:-}
+unwrapped=${THUMBS_UNWRAPPED:-}
 mode=${THUMBS_MODE:-copy}
 prepared=$STATE_DIR/prepared.$$.txt
+url_map=$STATE_DIR/urls.$$.json
 result=$STATE_DIR/result.$$.txt
+remapped=$STATE_DIR/remapped.$$.txt
 
-cleanup() { rm -f "$capture" "$layout" "$prepared" "$result"; }
+cleanup() { rm -f "$capture" "$unwrapped" "$layout" "$prepared" "$url_map" "$result" "$remapped"; }
 trap cleanup EXIT
 
 # The overlay closes the moment this script exits, so an error needs a keypress
@@ -36,6 +39,7 @@ rows=$(tput lines 2>/dev/null || echo 24)
 if command -v python3 >/dev/null 2>&1; then
   python3 "$PLUGIN_ROOT/scripts/prepare.py" \
     --capture "$capture" --pane "$target" \
+    --unwrapped "${unwrapped:-/dev/null}" --url-map "$url_map" \
     --cols "$cols" --rows "$rows" --align "$THUMBS_ALIGN" \
     <"${layout:-/dev/null}" >"$prepared" 2>>"$STATE_DIR/thumbs.log"
 else
@@ -62,6 +66,15 @@ while IFS= read -r line || [[ -n $line ]]; do
   matches+=("${line#*:}")
 done <"$result"
 ((${#matches[@]})) || exit 0
+
+if [[ -s $url_map ]]; then
+  # The picker returns the visible prefix; use the matching complete URL for
+  # copy, paste and open alike. Unknown and ambiguous prefixes stay unchanged.
+  printf '%s\n' "${matches[@]}" | python3 "$PLUGIN_ROOT/scripts/restore_urls.py" "$url_map" >"$remapped"
+  matches=()
+  while IFS= read -r match || [[ -n $match ]]; do matches+=("$match"); done <"$remapped"
+  rm -f "$remapped"
+fi
 
 joined=$(printf '%s ' "${matches[@]}")
 joined=${joined% }
@@ -139,8 +152,8 @@ open_match() {
       if [[ -n $THUMBS_OPEN_URL ]]; then
         run_template "$THUMBS_OPEN_URL" "$match" "$cwd"
       elif [[ ${OSTYPE:-} == darwin* ]] && command -v open >/dev/null 2>&1; then
-        detach open "$match"
-      elif command -v xdg-open >/dev/null 2>&1; then
+        detach open -a 'Google Chrome' "$match"
+      elif [[ -n ${DISPLAY:-}${WAYLAND_DISPLAY:-} ]] && command -v xdg-open >/dev/null 2>&1; then
         detach xdg-open "$match"
       else
         return 1

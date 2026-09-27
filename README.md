@@ -107,6 +107,14 @@ want for a command line.
 | git SHA | runs `git show <sha>` in a split |
 | anything else | falls back to copying |
 
+To open paths in an existing Neovim pane, set this in the plugin's `config.env` on the Herdr server:
+
+```sh
+THUMBS_OPEN_PATH='$HOME/.local/bin/open-in-nvim {} "$THUMBS_TARGET_PANE"'
+```
+
+The plugin passes an absolute path with an optional `:line` suffix and the source pane ID. This route skips the terminal hint script's machine lookup and pane-content scan.
+
 Set `THUMBS_UPCASE=open` to get tmux-thumbs' `@thumbs-upcase-command` habit, where
 an uppercase hint opens the match instead of pasting it. Every action above is
 configurable. `file.rs:42` line numbers come from a pattern this plugin adds

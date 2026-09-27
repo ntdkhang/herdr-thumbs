@@ -44,8 +44,10 @@ else
 fi
 [[ -s $prepared ]] || bail "could not prepare the capture for display"
 
-mapfile -t pattern_args < <(pattern_files)
-mapfile -t picker_args < <(thumbs_args "${pattern_args[@]}")
+pattern_args=()
+while IFS= read -r file; do pattern_args+=("$file"); done < <(pattern_files)
+picker_args=()
+while IFS= read -r arg; do picker_args+=("$arg"); done < <(thumbs_args "${pattern_args[@]}")
 : >"$result"
 "$bin" --format '%U:%H' --target "$result" "${picker_args[@]}" <"$prepared"
 
@@ -150,6 +152,8 @@ open_match() {
       file=${resolved%%$'\t'*}
       line=${resolved#*$'\t'}
       if [[ -n $THUMBS_OPEN_PATH ]]; then
+        # Keep the line number for custom openers such as open-in-nvim.
+        [[ -n $line ]] && file="$file:$line"
         run_template "$THUMBS_OPEN_PATH" "$file" "$cwd"
       else
         local editor=${THUMBS_EDITOR:-${VISUAL:-${EDITOR:-vi}}} command

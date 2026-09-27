@@ -33,8 +33,32 @@ bin=$(thumbs_bin) || bin=
 [[ -n $bin ]] ||
   bail "no thumbs binary found. Run scripts/build.sh in the plugin directory, or set THUMBS_BIN in $CONFIG_DIR/config.env"
 
-cols=$(tput cols 2>/dev/null || echo 80)
-rows=$(tput lines 2>/dev/null || echo 24)
+# The overlay PTY can start at 80x24 before Herdr applies the tab size. Using
+# that initial size cuts off the bottom of the source screen (and its hints).
+expected_rows=0 expected_cols=0
+if [[ -s ${layout:-} ]] && command -v python3 >/dev/null 2>&1; then
+  read -r expected_rows expected_cols <<<"$(python3 -c '
+import json, sys
+try:
+    area = json.load(sys.stdin)["result"]["layout"]["area"]
+    print(area["height"], area["width"])
+except (KeyError, TypeError, ValueError):
+    print(0, 0)
+' <"$layout")"
+fi
+for ((attempt=0; attempt<20; attempt++)); do
+  geometry=$(stty size </dev/tty 2>/dev/null) || geometry=
+  read -r rows cols <<<"$geometry"
+  [[ $rows =~ ^[0-9]+$ && $cols =~ ^[0-9]+$ ]] || break
+  ((expected_rows == 0 || expected_cols == 0 ||
+    (rows >= expected_rows - 2 && cols >= expected_cols - 2))) && break
+  sleep 0.025
+done
+if [[ ! $rows =~ ^[0-9]+$ || ! $cols =~ ^[0-9]+$ ]]; then
+  cols=$(tput cols 2>/dev/null || echo 80)
+  rows=$(tput lines 2>/dev/null || echo 24)
+fi
+log "overlay geometry=${cols}x${rows} layout=${expected_cols}x${expected_rows} source=$target"
 
 if command -v python3 >/dev/null 2>&1; then
   python3 "$PLUGIN_ROOT/scripts/prepare.py" \

@@ -51,9 +51,9 @@ need binding yourself. Paste this into `~/.config/herdr/config.toml` and run
 `herdr server reload-config`:
 
 ```toml
-# Copy a match. Ctrl+U takes precedence over the terminal's usual line-clear key.
+# Copy a match. Ctrl+O takes precedence over terminal applications' own shortcut.
 [[keys.command]]
-key = "ctrl+u"
+key = "ctrl+o"
 type = "plugin_action"
 command = "ntdkhang.thumbs.pick"
 description = "pick text (uppercase hint opens with THUMBS_UPCASE=open)"

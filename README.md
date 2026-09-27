@@ -56,7 +56,7 @@ need binding yourself. Paste this into `~/.config/herdr/config.toml` and run
 key = "ctrl+u"
 type = "plugin_action"
 command = "ntdkhang.thumbs.pick"
-description = "pick text"
+description = "pick text (uppercase hint opens with THUMBS_UPCASE=open)"
 
 # Copy several matches. Space during a normal pick does this too.
 [[keys.command]]
@@ -110,6 +110,7 @@ want for a command line.
 To open paths in an existing Neovim pane, set this in the plugin's `config.env` on the Herdr server:
 
 ```sh
+THUMBS_UPCASE=open
 THUMBS_OPEN_PATH='$HOME/.local/bin/open-in-nvim {} "$THUMBS_TARGET_PANE"'
 ```
 
